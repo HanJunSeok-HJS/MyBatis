@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ino.web.freeBoard.mapper.FreeBoardMapper">
+
+
+	<!-- <select id="freeBoardGetList" resultType="freeBoardDto" > resultType="ino.web.board.dto.BoardDto"
+		SELECT CASE CODE_TYPE 
+         WHEN '01' THEN '자유' 
+         WHEN '02' THEN '익명' 
+         WHEN '03' THEN 'QnA'
+         ELSE '오류닷'
+       END as "codeType", NUM, NAME, TITLE, CONTENT, TO_CHAR(REGDATE , 'YYYY/MM/DD') AS REGDATE FROM FREEBOARD
+	</select> -->
+	
+	<select id="freeBoardGetList" resultType="freeBoardDto" > <!-- resultType="ino.web.board.dto.BoardDto" -->
+		SELECT
+		DECODE(CODE_TYPE,'01','자유','02','익명','03','QnA')as codeType,
+ 		NAME,NUM, TITLE,TO_CHAR(REGDATE,'YYYY/MM/DD') REGDATE, CONTENT FROM FREEBOARD
+ 		<where>
+ 			<choose>
+ 				<when test="selectbox == 1">
+ 					CODE_TYPE=#{types}
+ 				</when>
+ 				<when test="selectbox == 2">
+ 					NUM LIKE '%'||#{textBar}||'%'
+ 				</when>
+ 				<when test="selectbox == 3">
+ 					CONTENT LIKE '%'||#{textBar}||'%'
+ 				</when>
+ 				<when test="selectbox == 4">
+ 					NAME LIKE '%'||#{textBar}||'%'
+ 				</when>
+ 				<when test="selectbox == 5">
+ 					TITLE LIKE '%'||#{textBar}||'%'
+ 				</when>
+ 				<when test="selectbox == 6">
+ 					TO_CHAR(REGDATE,'YYYYMMDD') BETWEEN #{between} AND #{between2}
+ 				</when>
+ 			</choose>
+ 		</where>
+ 		ORDER BY NUM DESC
+	</select>
+
+	<insert id="freeBoardInsertPro" parameterType="freeBoardDto">
+		INSERT INTO FREEBOARD(NUM, CODE_TYPE, TITLE, NAME, REGDATE, CONTENT)
+		VALUES(SEQ.NEXTVAL, #{codeType}, #{title}, #{name}, SYSDATE, #{content})
+		<selectKey resultType="int" keyProperty="num" order="AFTER">
+			SELECT MAX(NUM) FROM FREEBOARD
+		</selectKey>
+	</insert>
+
+	<select id="freeBoardDetailByNum" resultType="freeBoardDto" parameterType="int">
+		SELECT CODE_TYPE as codeType, NUM, TITLE, NAME, TO_CHAR(REGDATE,'YYYY/MM/DD') REGDATE, CONTENT FROM FREEBOARD
+		WHERE NUM=#{num}
+	</select>
+
+	<select id="freeBoardNewNum" resultType="int">
+		SELECT MAX(NUM)
+		FROM FREEBOARD
+	</select>
+
+	<update id="freeBoardModify" parameterType="freeBoardDto">
+		UPDATE FREEBOARD
+		SET TITLE = #{title}
+				, CONTENT = #{content}
+				, CODE_TYPE = #{codeType}
+		WHERE NUM = #{num}
+
+	</update>
+
+	<update id="freeBoardDelete" parameterType="int">
+		DELETE FROM FREEBOARD
+		WHERE NUM
+		= #{num}
+	</update>
+
+	<update id="freeBoardDeletes" parameterType="java.util.Arrays">
+		DELETE FROM FREEBOARD
+		WHERE NUM IN
+		<foreach collection="array" item="item" separator="," open="(" close =")">
+			#{item}
+		</foreach>
+	</update>
+
+</mapper>
